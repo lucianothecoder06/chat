@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Un documento de imagen no puede pasar de ~700 KB de Base64 (el límite de Firestore es 1 MiB)
+    function imageOk(img) {
+      return img == null || (img is string && img.size() < 700000);
+    }
+
+    // Cada usuario solo escribe su propio perfil; cualquiera con sesión puede verlo (lista de usuarios)
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && imageOk(request.resource.data.get('photoBase64', null));
+      allow delete: if false;
+    }
+
+    match /chats/{chatId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      allow create: if signedIn()
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() == 2;
+      // Solo se actualiza el resumen del último mensaje; los participantes no cambian
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function isParticipant() {
+          return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        }
+
+        allow read: if signedIn() && isParticipant();
+        allow create: if signedIn() && isParticipant()
+          && request.resource.data.senderId == request.auth.uid
+          && imageOk(request.resource.data.get('imageBase64', null));
+        // Los mensajes no se editan ni se borran
+        allow update, delete: if false;
+      }
+    }
+  }
+}
