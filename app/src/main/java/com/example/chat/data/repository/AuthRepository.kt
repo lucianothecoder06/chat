@@ -1,6 +1,7 @@
 package com.example.chat.data.repository
 
 import com.example.chat.data.model.User
+import android.util.Log
 import com.example.chat.util.Resource
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
@@ -11,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -21,6 +23,7 @@ import kotlinx.coroutines.tasks.await
 class AuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val messaging: FirebaseMessaging = FirebaseMessaging.getInstance(),
 ) {
 
     /** Uid del usuario con sesión abierta, o null. Firebase guarda la sesión aunque se cierre la app. */
@@ -61,7 +64,28 @@ class AuthRepository(
     }
 
     fun logout() {
+        // Se invalida el token de este teléfono para que no le lleguen pushes del usuario que salió.
+        // Al volver a entrar, Firebase genera uno nuevo y se guarda con refreshFcmToken().
+        messaging.deleteToken()
         auth.signOut()
+    }
+
+    /** Pide el token FCM de este teléfono y lo guarda en `users/{uid}`. Se llama al entrar a la app. */
+    fun refreshFcmToken() {
+        messaging.token.addOnSuccessListener { token ->
+            Log.d(TAG, "Token FCM: $token") // útil para mandar una prueba desde la consola
+            saveFcmToken(token)
+        }
+    }
+
+    /**
+     * Guarda el token en `users/{uid}.fcmToken`; la Cloud Function (T17) lo lee para saber a qué
+     * teléfono mandar el push. Sin sesión no hace nada: el token se guardará al iniciar sesión.
+     */
+    fun saveFcmToken(token: String) {
+        val uid = currentUid ?: return
+        db.collection(USERS).document(uid).update(FCM_TOKEN, token)
+            .addOnFailureListener { e -> Log.w(TAG, "No se pudo guardar el token FCM", e) }
     }
 
     /**
@@ -88,6 +112,8 @@ class AuthRepository(
 
     companion object {
         const val USERS = "users"
+        const val FCM_TOKEN = "fcmToken"
+        private const val TAG = "AuthRepository"
         private const val GENERIC_ERROR = "No se pudo completar la operación. Intenta de nuevo."
     }
 }
