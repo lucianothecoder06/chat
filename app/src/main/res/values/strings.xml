@@ -20,6 +20,11 @@
     <string name="register_button">Registrarme</string>
     <string name="register_go_login">¿Ya tienes cuenta? Inicia sesión</string>
 
+    <!-- Notificaciones -->
+    <string name="notification_channel_name">Mensajes</string>
+    <string name="notification_channel_description">Avisos de mensajes nuevos</string>
+    <string name="notification_default_title">Nuevo mensaje</string>
+
     <!-- Validaciones -->
     <string name="error_email_empty">Ingresa tu correo</string>
     <string name="error_email_invalid">El correo no es válido</string>

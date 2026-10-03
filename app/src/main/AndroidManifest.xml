@@ -12,6 +12,14 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/Theme.Chat">
+        <!-- Canal e ícono que usa Android para los push que muestra solo (app en segundo plano) -->
+        <meta-data
+                android:name="com.google.firebase.messaging.default_notification_channel_id"
+                android:value="messages"/>
+        <meta-data
+                android:name="com.google.firebase.messaging.default_notification_icon"
+                android:resource="@drawable/ic_notification"/>
+
         <activity
                 android:name=".ui.splash.SplashActivity"
                 android:exported="true">
@@ -32,6 +40,14 @@
         <activity
                 android:name=".MainActivity"
                 android:exported="false"/>
+
+        <service
+                android:name=".notifications.ChatMessagingService"
+                android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
