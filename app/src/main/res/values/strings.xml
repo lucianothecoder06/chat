@@ -2,6 +2,13 @@
     <string name="app_name">Chat</string>
     <string name="main_placeholder">Hola Android</string>
 
+    <!-- Login -->
+    <string name="login_title">Bienvenido</string>
+    <string name="login_subtitle">Inicia sesión para chatear</string>
+    <string name="hint_email">Correo</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="login_button">Iniciar sesión</string>
+
     <!-- Validaciones -->
     <string name="error_email_empty">Ingresa tu correo</string>
     <string name="error_email_invalid">El correo no es válido</string>
