@@ -27,6 +27,10 @@ class AuthRepository(
     val currentUid: String?
         get() = auth.currentUser?.uid
 
+    /** Correo del usuario con sesión abierta, o null. */
+    val currentEmail: String?
+        get() = auth.currentUser?.email
+
     fun isLoggedIn(): Boolean = auth.currentUser != null
 
     suspend fun register(name: String, email: String, password: String): Resource<User> {

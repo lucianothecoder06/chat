@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Chat</string>
     <string name="main_placeholder">Hola Android</string>
+    <string name="main_logged_in_as">Sesión iniciada como\n%1$s</string>
+    <string name="action_logout">Cerrar sesión</string>
 
     <!-- Login -->
     <string name="login_title">Bienvenido</string>
@@ -8,6 +10,15 @@
     <string name="hint_email">Correo</string>
     <string name="hint_password">Contraseña</string>
     <string name="login_button">Iniciar sesión</string>
+    <string name="login_go_register">¿No tienes cuenta? Regístrate</string>
+
+    <!-- Registro -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_subtitle">Regístrate con tu correo</string>
+    <string name="hint_name">Nombre</string>
+    <string name="hint_password_confirm">Confirmar contraseña</string>
+    <string name="register_button">Registrarme</string>
+    <string name="register_go_login">¿Ya tienes cuenta? Inicia sesión</string>
 
     <!-- Validaciones -->
     <string name="error_email_empty">Ingresa tu correo</string>
