@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">Chat</string>
     <string name="main_placeholder">Hola Android</string>
+
+    <!-- Validaciones -->
+    <string name="error_email_empty">Ingresa tu correo</string>
+    <string name="error_email_invalid">El correo no es válido</string>
+    <string name="error_password_empty">Ingresa tu contraseña</string>
+    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_name_empty">Ingresa tu nombre</string>
+    <string name="error_name_long">El nombre no puede superar 40 caracteres</string>
+    <string name="error_message_empty">El mensaje no puede estar vacío</string>
 </resources>
