@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Chat</string>
     <string name="main_placeholder">Hola Android</string>
+    <string name="main_logged_in_as">Sesión iniciada como\n%1$s</string>
+    <string name="action_logout">Cerrar sesión</string>
 
     <!-- Login -->
     <string name="login_title">Bienvenido</string>
