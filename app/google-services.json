@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "270401696245",
+    "project_id": "chat-luciano-genaro",
+    "storage_bucket": "chat-luciano-genaro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270401696245:android:b5e46f9d04eb22d75830bc",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAw2gofcptJ5mM8ABKudGQabRWlpP6rQp0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270401696245:android:91935436ad7473225830bc",
+        "android_client_info": {
+          "package_name": "com.example.chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAw2gofcptJ5mM8ABKudGQabRWlpP6rQp0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
