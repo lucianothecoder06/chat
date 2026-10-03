@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
+    implementation(libs.kotlinx.coroutines.play.services) // .await() sobre las Task de Firebase
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
