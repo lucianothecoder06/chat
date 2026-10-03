@@ -10,18 +10,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
 import com.example.chat.MainActivity
-import com.example.chat.databinding.ActivityLoginBinding
+import com.example.chat.databinding.ActivityRegisterBinding
 import com.example.chat.util.Resource
 
-class LoginActivity : AppCompatActivity() {
+class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityLoginBinding
-    private val viewModel: LoginViewModel by viewModels()
+    private lateinit var binding: ActivityRegisterBinding
+    private val viewModel: RegisterViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityLoginBinding.inflate(layoutInflater)
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -35,39 +35,47 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        binding.btnLogin.setOnClickListener { submit() }
+        binding.btnRegister.setOnClickListener { submit() }
 
-        // Intent explícito a la pantalla de registro; el login queda abajo en la pila
-        binding.btnGoRegister.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
-        }
-
-        // Tecla "Listo" del teclado en el campo de contraseña
-        binding.etPassword.setOnEditorActionListener { _, _, _ ->
+        // Tecla "Listo" del teclado en el último campo
+        binding.etConfirm.setOnEditorActionListener { _, _, _ ->
             submit()
             true
         }
 
+        // "¿Ya tienes cuenta?" vuelve al login, que sigue abajo en la pila
+        binding.btnGoLogin.setOnClickListener { finish() }
+
         // Al corregir un campo se quita su error
+        binding.etName.doAfterTextChanged { binding.tilName.error = null }
         binding.etEmail.doAfterTextChanged { binding.tilEmail.error = null }
         binding.etPassword.doAfterTextChanged { binding.tilPassword.error = null }
+        binding.etConfirm.doAfterTextChanged { binding.tilConfirm.error = null }
     }
 
     private fun submit() {
-        viewModel.login(
+        viewModel.register(
+            binding.etName.text.toString(),
             binding.etEmail.text.toString(),
             binding.etPassword.text.toString(),
+            binding.etConfirm.text.toString(),
         )
     }
 
     private fun observeViewModel() {
+        viewModel.nameError.observe(this) { error ->
+            binding.tilName.error = error?.let { getString(it) }
+        }
         viewModel.emailError.observe(this) { error ->
             binding.tilEmail.error = error?.let { getString(it) }
         }
         viewModel.passwordError.observe(this) { error ->
             binding.tilPassword.error = error?.let { getString(it) }
         }
-        viewModel.loginState.observe(this) { state ->
+        viewModel.confirmError.observe(this) { error ->
+            binding.tilConfirm.error = error?.let { getString(it) }
+        }
+        viewModel.registerState.observe(this) { state ->
             when (state) {
                 is Resource.Loading -> showLoading(true)
                 is Resource.Success -> goToHome()
@@ -82,12 +90,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showLoading(loading: Boolean) {
         binding.progress.visibility = if (loading) View.VISIBLE else View.GONE
-        binding.btnLogin.isEnabled = !loading
+        binding.btnRegister.isEnabled = !loading
         if (loading) binding.tvError.visibility = View.GONE
     }
 
     private fun goToHome() {
-        // Se limpia la pila para que "atrás" no regrese al login
+        // Firebase ya dejó la sesión iniciada; se limpia la pila para que "atrás" no vuelva al registro ni al login
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
