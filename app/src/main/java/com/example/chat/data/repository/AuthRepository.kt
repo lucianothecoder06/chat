@@ -2,7 +2,14 @@ package com.example.chat.data.repository
 
 import com.example.chat.data.model.User
 import com.example.chat.util.Resource
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -36,7 +43,7 @@ class AuthRepository(
             }
             Resource.Success(user)
         } catch (e: Exception) {
-            Resource.Error(GENERIC_ERROR, e)
+            Resource.Error(errorMessage(e), e)
         }
     }
 
@@ -45,7 +52,7 @@ class AuthRepository(
             val result = auth.signInWithEmailAndPassword(email.trim(), password).await()
             Resource.Success(result.user!!.uid)
         } catch (e: Exception) {
-            Resource.Error(GENERIC_ERROR, e)
+            Resource.Error(errorMessage(e), e)
         }
     }
 
@@ -53,10 +60,30 @@ class AuthRepository(
         auth.signOut()
     }
 
+    /**
+     * Traduce la excepción de Firebase a un mensaje en español para el usuario.
+     * El orden importa: `FirebaseAuthWeakPasswordException` es hija de
+     * `FirebaseAuthInvalidCredentialsException`, por eso va primero.
+     */
+    private fun errorMessage(e: Exception): String = when (e) {
+        is FirebaseNetworkException -> "Sin conexión a internet. Revisa tu red e intenta de nuevo."
+        is FirebaseTooManyRequestsException -> "Demasiados intentos. Espera un momento e intenta de nuevo."
+        is FirebaseAuthUserCollisionException -> "Ya existe una cuenta con ese correo."
+        is FirebaseAuthWeakPasswordException -> "La contraseña es muy débil. Usa al menos 6 caracteres."
+        is FirebaseAuthInvalidUserException ->
+            if (e.errorCode == "ERROR_USER_DISABLED") "Esta cuenta está deshabilitada."
+            else "Correo o contraseña incorrectos."
+        is FirebaseAuthInvalidCredentialsException ->
+            if (e.errorCode == "ERROR_INVALID_EMAIL") "El correo no es válido."
+            else "Correo o contraseña incorrectos."
+        is FirebaseAuthException ->
+            if (e.errorCode == "ERROR_OPERATION_NOT_ALLOWED") "El inicio de sesión con correo no está habilitado en Firebase."
+            else GENERIC_ERROR
+        else -> GENERIC_ERROR
+    }
+
     companion object {
         const val USERS = "users"
-
-        // T06 reemplaza este texto por mensajes en español según el código de error de Firebase
         private const val GENERIC_ERROR = "No se pudo completar la operación. Intenta de nuevo."
     }
 }
