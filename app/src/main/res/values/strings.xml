@@ -11,6 +11,12 @@
         <item>Oscuro</item>
     </string-array>
 
+    <!-- Chat -->
+    <string name="chat_you">Tú</string>
+    <string name="chat_hint">Escribe un mensaje</string>
+    <string name="chat_send">Enviar</string>
+    <string name="chat_empty">Aún no hay mensajes. ¡Saluda!</string>
+
     <!-- Login -->
     <string name="login_title">Bienvenido</string>
     <string name="login_subtitle">Inicia sesión para chatear</string>
