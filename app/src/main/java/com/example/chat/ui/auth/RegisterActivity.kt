@@ -9,8 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
-import com.example.chat.MainActivity
 import com.example.chat.databinding.ActivityRegisterBinding
+import com.example.chat.ui.users.UsersActivity
 import com.example.chat.util.Resource
 
 class RegisterActivity : AppCompatActivity() {
@@ -96,7 +96,7 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun goToHome() {
         // Firebase ya dejó la sesión iniciada; se limpia la pila para que "atrás" no vuelva al registro ni al login
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, UsersActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

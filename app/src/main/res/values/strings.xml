@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Chat</string>
-    <string name="main_placeholder">Hola Android</string>
-    <string name="main_logged_in_as">Sesión iniciada como\n%1$s</string>
+    <string name="users_title">Chats</string>
+    <string name="users_empty">Aún no hay otros usuarios registrados</string>
     <string name="action_logout">Cerrar sesión</string>
 
     <!-- Login -->

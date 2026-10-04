@@ -9,8 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.doAfterTextChanged
-import com.example.chat.MainActivity
 import com.example.chat.databinding.ActivityLoginBinding
+import com.example.chat.ui.users.UsersActivity
 import com.example.chat.util.Resource
 
 class LoginActivity : AppCompatActivity() {
@@ -88,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun goToHome() {
         // Se limpia la pila para que "atrás" no regrese al login
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, UsersActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
