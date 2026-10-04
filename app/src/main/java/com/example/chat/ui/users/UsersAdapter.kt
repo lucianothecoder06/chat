@@ -1,7 +1,5 @@
 package com.example.chat.ui.users
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -9,6 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chat.data.model.User
 import com.example.chat.databinding.ItemUserBinding
+import com.example.chat.util.ImageUtils
 
 /** Fila de la lista de usuarios. `onClick` se ejecuta al tocar un usuario. */
 class UsersAdapter(
@@ -31,22 +30,13 @@ class UsersAdapter(
             binding.tvEmail.text = user.email
             binding.root.setOnClickListener { onClick(user) }
 
-            val photo = decodePhoto(user.photoBase64)
+            val photo = ImageUtils.decodeBase64(user.photoBase64)
             if (photo != null) {
                 binding.ivAvatar.setImageBitmap(photo)
                 binding.tvInitial.text = ""
             } else {
                 binding.ivAvatar.setImageDrawable(null)
                 binding.tvInitial.text = user.name.trim().take(1).uppercase()
-            }
-        }
-
-        private fun decodePhoto(base64: String?) = base64?.let {
-            try {
-                val bytes = Base64.decode(it, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            } catch (e: IllegalArgumentException) {
-                null // Base64 mal formado: se muestra la inicial
             }
         }
     }
