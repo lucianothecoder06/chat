@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Base.Theme.Chat" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#FF4CC9A4</item>
-        <item name="colorOnPrimary">#FF00382B</item>
-        <item name="colorPrimaryContainer">#FF16332A</item>
-        <item name="colorOnPrimaryContainer">#FFDFF1EA</item>
-    </style>
-</resources>
