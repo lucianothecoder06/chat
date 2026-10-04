@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mismos nombres que values/colors.xml: en modo oscuro Android toma estos valores automáticamente -->
+<resources>
+    <color name="brand_primary">#FF4CC9A4</color>
+    <color name="brand_on_primary">#FF00382B</color>
+    <color name="brand_primary_container">#FF16332A</color>
+    <color name="brand_on_primary_container">#FFDFF1EA</color>
+</resources>

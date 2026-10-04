@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.chat.R
 import com.example.chat.data.model.Chat
 import com.example.chat.data.model.User
@@ -22,6 +23,7 @@ import com.example.chat.notifications.NotificationHelper
 import com.example.chat.ui.auth.LoginActivity
 import com.example.chat.ui.chat.ChatActivity
 import com.example.chat.util.Resource
+import com.example.chat.util.ThemePreference
 
 /** Pantalla principal: lista de usuarios registrados. Tocar uno abre el chat con esa persona. */
 class UsersActivity : AppCompatActivity() {
@@ -51,11 +53,16 @@ class UsersActivity : AppCompatActivity() {
 
         binding.toolbar.inflateMenu(R.menu.menu_main)
         binding.toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_logout) {
-                logout()
-                true
-            } else {
-                false
+            when (item.itemId) {
+                R.id.action_theme -> {
+                    showThemeDialog()
+                    true
+                }
+                R.id.action_logout -> {
+                    logout()
+                    true
+                }
+                else -> false
             }
         }
 
@@ -102,6 +109,18 @@ class UsersActivity : AppCompatActivity() {
         ) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    /** Diálogo con las 3 opciones de tema; la opción actual aparece marcada. */
+    private fun showThemeDialog() {
+        val current = ThemePreference.MODES.indexOf(ThemePreference.load(this))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.action_theme)
+            .setSingleChoiceItems(R.array.theme_options, current) { dialog, which ->
+                dialog.dismiss()
+                ThemePreference.save(this, ThemePreference.MODES[which])
+            }
+            .show()
     }
 
     private fun logout() {

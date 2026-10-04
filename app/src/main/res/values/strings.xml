@@ -3,6 +3,13 @@
     <string name="users_title">Chats</string>
     <string name="users_empty">Aún no hay otros usuarios registrados</string>
     <string name="action_logout">Cerrar sesión</string>
+    <string name="action_theme">Tema</string>
+    <!-- Mismo orden que ThemePreference.MODES -->
+    <string-array name="theme_options">
+        <item>Según el sistema</item>
+        <item>Claro</item>
+        <item>Oscuro</item>
+    </string-array>
 
     <!-- Login -->
     <string name="login_title">Bienvenido</string>
