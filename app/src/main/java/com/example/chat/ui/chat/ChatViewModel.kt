@@ -10,6 +10,7 @@ import com.example.chat.data.repository.AuthRepository
 import com.example.chat.data.repository.ChatRepository
 import com.example.chat.util.Resource
 import com.example.chat.util.Validators
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -38,9 +39,12 @@ class ChatViewModel @JvmOverloads constructor(
     private val _sendError = MutableLiveData<String>()
     val sendError: LiveData<String> = _sendError
 
+    // Escucha de Firestore; se guarda para cancelarla en onCleared
+    private var messagesJob: Job? = null
+
     init {
         if (chatId != null) {
-            viewModelScope.launch {
+            messagesJob = viewModelScope.launch {
                 chatRepository.observeMessages(chatId).collect { _messages.value = it }
             }
         }
@@ -60,5 +64,10 @@ class ChatViewModel @JvmOverloads constructor(
             if (result is Resource.Error) _sendError.value = result.message
         }
         return true
+    }
+
+    override fun onCleared() {
+        // Al cancelar el Flow, ChatRepository quita el snapshot listener (awaitClose)
+        messagesJob?.cancel()
     }
 }
