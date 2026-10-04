@@ -5,8 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.example.chat.MainActivity
 import com.example.chat.ui.auth.LoginActivity
+import com.example.chat.ui.users.UsersActivity
 
 /**
  * Primera pantalla de la app (LAUNCHER). No tiene layout: solo decide a dónde ir y se cierra.
@@ -22,7 +22,7 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Con sesión guardada se entra directo; si no, al login
-        val next = if (viewModel.isLoggedIn()) MainActivity::class.java else LoginActivity::class.java
+        val next = if (viewModel.isLoggedIn()) UsersActivity::class.java else LoginActivity::class.java
         startActivity(Intent(this, next))
         finish() // "atrás" no debe volver al splash
     }
