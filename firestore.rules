@@ -33,7 +33,9 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         function isParticipant() {
-          return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+          // getAfter: ve el chat tal como queda tras la escritura, así el primer mensaje
+          // (que crea el chat en el mismo batch) también pasa
+          return request.auth.uid in getAfter(/databases/$(database)/documents/chats/$(chatId)).data.participants;
         }
 
         allow read: if signedIn() && isParticipant();
