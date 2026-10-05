@@ -72,7 +72,12 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.play.services) // .await() sobre las Task de Firebase
-    implementation(libs.google.auth) // firma las llamadas a la API de FCM con la cuenta de servicio (T17)
+    // Firma las llamadas a la API de FCM con la cuenta de servicio (T17).
+    // Se excluye gRPC: trae la versión 1.66 y Firestore usa la 1.62; mezclarlas hace que la app
+    // se cierre al conectarse a Firestore (NoClassDefFoundError: io.grpc.InternalGlobalInterceptors).
+    implementation(libs.google.auth) {
+        exclude(group = "io.grpc")
+    }
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
