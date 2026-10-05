@@ -66,6 +66,17 @@ class ChatViewModel @JvmOverloads constructor(
         return true
     }
 
+    /** Manda una imagen ya reducida y en Base64 (ver ImageUtils.encodeToBase64), sin texto. */
+    fun sendImage(imageBase64: String) {
+        val chat = chatId ?: return
+        val sender = myUid ?: return
+        val receiver = otherUid ?: return
+        viewModelScope.launch {
+            val result = chatRepository.sendMessage(chat, sender, receiver, text = "", imageBase64 = imageBase64)
+            if (result is Resource.Error) _sendError.value = result.message
+        }
+    }
+
     override fun onCleared() {
         // Al cancelar el Flow, ChatRepository quita el snapshot listener (awaitClose)
         messagesJob?.cancel()

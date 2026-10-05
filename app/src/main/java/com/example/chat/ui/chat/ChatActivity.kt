@@ -1,17 +1,25 @@
 package com.example.chat.ui.chat
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.R
 import com.example.chat.databinding.ActivityChatBinding
+import com.example.chat.util.ImageUtils
 import com.example.chat.util.Resource
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Conversación con una persona. Recibe los extras desde la lista de usuarios. */
 class ChatActivity : AppCompatActivity() {
@@ -19,6 +27,12 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private val viewModel: ChatViewModel by viewModels()
     private lateinit var adapter: MessageAdapter
+
+    // Selector del sistema: no pide permisos porque el usuario elige la imagen y solo se nos da esa
+    private val pickImage =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) sendImage(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +62,9 @@ class ChatActivity : AppCompatActivity() {
         binding.rvMessages.adapter = adapter
 
         binding.btnSend.setOnClickListener { submit() }
+        binding.btnAttach.setOnClickListener {
+            pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
         binding.etMessage.setOnEditorActionListener { _, _, _ ->
             submit()
             true
@@ -59,6 +76,20 @@ class ChatActivity : AppCompatActivity() {
     private fun submit() {
         if (viewModel.send(binding.etMessage.text.toString())) {
             binding.etMessage.text?.clear()
+        }
+    }
+
+    /** Reducir y comprimir la imagen es pesado, así que se hace en un hilo de fondo. */
+    private fun sendImage(uri: Uri) {
+        binding.btnAttach.isEnabled = false
+        lifecycleScope.launch {
+            val base64 = withContext(Dispatchers.IO) { ImageUtils.encodeToBase64(contentResolver, uri) }
+            binding.btnAttach.isEnabled = true
+            if (base64 == null) {
+                Snackbar.make(binding.root, R.string.chat_image_error, Snackbar.LENGTH_LONG).show()
+            } else {
+                viewModel.sendImage(base64)
+            }
         }
     }
 

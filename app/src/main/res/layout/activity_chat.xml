@@ -62,6 +62,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <ImageButton
+            android:id="@+id/btnAttach"
+            style="?attr/actionButtonStyle"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/chat_attach"
+            android:src="@drawable/ic_image"
+            app:tint="?attr/colorPrimary" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilMessage"
             style="?attr/textInputOutlinedStyle"
