@@ -1,5 +1,6 @@
 package com.example.chat.data.repository
 
+import com.example.chat.data.model.Chat
 import com.example.chat.data.model.Message
 import com.example.chat.util.Resource
 import com.google.firebase.firestore.DocumentSnapshot.ServerTimestampBehavior
@@ -48,6 +49,7 @@ class ChatRepository(
                 LAST_SENDER_ID to senderId,
                 LAST_MESSAGE_AT to FieldValue.serverTimestamp(),
                 TYPING to mapOf(senderId to false), // al enviar deja de "escribir"
+                UNREAD to mapOf(receiverId to FieldValue.increment(1)), // +1 sin leer para el otro
             )
 
             db.batch()
@@ -96,6 +98,39 @@ class ChatRepository(
             .addOnFailureListener { e -> Log.w(TAG, "No se pudo actualizar el estado de escritura", e) }
     }
 
+    /** Pone en 0 los mensajes sin leer de `myUid` en este chat (se llama cuando los ve en pantalla). */
+    fun markAsRead(chatId: String, myUid: String, otherUid: String) {
+        val data = mapOf(
+            PARTICIPANTS to participantsOf(myUid, otherUid),
+            UNREAD to mapOf(myUid to 0),
+        )
+        db.collection(CHATS).document(chatId).set(data, SetOptions.merge())
+            .addOnFailureListener { e -> Log.w(TAG, "No se pudo marcar el chat como leído", e) }
+    }
+
+    /**
+     * Los chats de `myUid` con cada uno de `otherUids`, en tiempo real, indexados por el uid del otro.
+     * Se escucha el documento de cada chat por su id (uidA_uidB) en vez de hacer una consulta,
+     * porque así basta con las reglas por id. Solo aparecen los chats que ya existen.
+     */
+    fun observeChats(myUid: String, otherUids: List<String>): Flow<Map<String, Chat>> = callbackFlow {
+        val chats = mutableMapOf<String, Chat>()
+        trySend(emptyMap()) // la lista se pinta sin esperar a Firestore
+        val registrations = otherUids.map { otherUid ->
+            db.collection(CHATS).document(Chat.idFor(myUid, otherUid))
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.w(TAG, "No se pudo leer el chat con $otherUid", error)
+                        return@addSnapshotListener
+                    }
+                    val chat = snapshot?.toObject(Chat::class.java)
+                    if (chat != null) chats[otherUid] = chat else chats.remove(otherUid)
+                    trySend(chats.toMap())
+                }
+        }
+        awaitClose { registrations.forEach { it.remove() } }
+    }
+
     /** true mientras la otra persona está escribiendo en este chat. */
     fun observeTyping(chatId: String, otherUid: String): Flow<Boolean> = callbackFlow {
         val registration = db.collection(CHATS).document(chatId)
@@ -121,6 +156,7 @@ class ChatRepository(
         private const val LAST_SENDER_ID = "lastSenderId"
         private const val LAST_MESSAGE_AT = "lastMessageAt"
         private const val TYPING = "typing"
+        private const val UNREAD = "unread"
         private const val TAG = "ChatRepository"
         private const val CREATED_AT = "createdAt"
     }

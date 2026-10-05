@@ -117,6 +117,7 @@ class ChatActivity : AppCompatActivity() {
                 is Resource.Loading -> binding.tvEmpty.visibility = View.GONE
                 is Resource.Success -> {
                     // El callback corre cuando la lista ya se aplicó: ahí se baja al último mensaje
+                    viewModel.onMessagesShown(state.data)
                     adapter.submitList(state.data) {
                         if (state.data.isNotEmpty()) binding.rvMessages.scrollToPosition(state.data.size - 1)
                     }

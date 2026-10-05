@@ -14,6 +14,7 @@ data class Chat(
     val lastSenderId: String = "",
     val lastMessageAt: Date? = null,
     val typing: Map<String, Boolean> = emptyMap(), // uid → está escribiendo ahora
+    val unread: Map<String, Long> = emptyMap(), // uid → mensajes que ese usuario aún no lee
 ) {
     /** Uid del otro participante en un chat 1 a 1. */
     fun otherUserId(myUid: String): String? = participants.firstOrNull { it != myUid }

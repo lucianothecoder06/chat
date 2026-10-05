@@ -56,6 +56,9 @@ class ChatViewModel @JvmOverloads constructor(
     private var iAmTyping = false
     private var idleJob: Job? = null
 
+    // Último mensaje del otro que ya se marcó como leído (evita escribir en Firestore de más)
+    private var lastReadMessageId: String? = null
+
     init {
         if (chatId != null) {
             messagesJob = viewModelScope.launch {
@@ -67,6 +70,20 @@ class ChatViewModel @JvmOverloads constructor(
                 }
             }
         }
+    }
+
+    /**
+     * La Activity lo llama con los mensajes que tiene en pantalla: si el último es del otro,
+     * se ponen en 0 los sin leer de este chat. Solo se escribe cuando llega uno nuevo.
+     */
+    fun onMessagesShown(messages: List<Message>) {
+        val last = messages.lastOrNull() ?: return
+        if (last.senderId == myUid || last.id == lastReadMessageId) return
+        val chat = chatId ?: return
+        val me = myUid ?: return
+        val other = otherUid ?: return
+        lastReadMessageId = last.id
+        chatRepository.markAsRead(chat, me, other)
     }
 
     /** Se llama en cada cambio del campo de texto. Avisa "escribiendo" y lo quita tras 3 s sin teclear. */
