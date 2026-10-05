@@ -1,1 +1,3 @@
 /build
+# Llave privada de FCM (T17): se comparte por privado, nunca en git
+/fcm-service-account.json

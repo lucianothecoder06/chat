@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.chat.data.model.Message
 import com.example.chat.data.repository.AuthRepository
 import com.example.chat.data.repository.ChatRepository
+import com.example.chat.data.repository.PushRepository
 import com.example.chat.util.Resource
 import com.example.chat.util.Validators
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Lógica de una conversación. Los extras del Intent (chatId, otherUid...) llegan en el
@@ -22,6 +25,7 @@ class ChatViewModel @JvmOverloads constructor(
     savedStateHandle: SavedStateHandle,
     authRepository: AuthRepository = AuthRepository(),
     private val chatRepository: ChatRepository = ChatRepository(),
+    private val pushRepository: PushRepository = PushRepository(),
 ) : ViewModel() {
 
     val myUid: String? = authRepository.currentUid
@@ -108,6 +112,7 @@ class ChatViewModel @JvmOverloads constructor(
         viewModelScope.launch {
             val result = chatRepository.sendMessage(chat, sender, receiver, text)
             if (result is Resource.Error) _sendError.value = result.message
+            else notifyReceiver(chat, sender, receiver, text.trim())
         }
         return true
     }
@@ -120,6 +125,18 @@ class ChatViewModel @JvmOverloads constructor(
         viewModelScope.launch {
             val result = chatRepository.sendMessage(chat, sender, receiver, text = "", imageBase64 = imageBase64)
             if (result is Resource.Error) _sendError.value = result.message
+            else notifyReceiver(chat, sender, receiver, PHOTO_PREVIEW)
+        }
+    }
+
+    /**
+     * Push al receptor (T17), solo si el mensaje se guardó bien.
+     * NonCancellable: si el usuario sale del chat justo después de enviar, el ViewModel se destruye
+     * pero el push se termina de mandar igual.
+     */
+    private suspend fun notifyReceiver(chat: String, sender: String, receiver: String, body: String) {
+        withContext(NonCancellable) {
+            pushRepository.notifyNewMessage(chat, sender, receiver, body)
         }
     }
 
@@ -132,5 +149,6 @@ class ChatViewModel @JvmOverloads constructor(
 
     private companion object {
         const val TYPING_IDLE_MILLIS = 3000L
+        const val PHOTO_PREVIEW = "📷 Foto" // mismo texto que ChatRepository pone en lastMessage
     }
 }
