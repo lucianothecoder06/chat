@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.chat.R
 import com.example.chat.data.model.User
 import com.example.chat.databinding.ItemUserBinding
 import com.example.chat.util.ImageUtils
@@ -29,7 +30,12 @@ class UsersAdapter(
         fun bind(item: UserItem) {
             val user = item.user
             binding.tvName.text = user.name
-            binding.tvEmail.text = user.email
+            // Con conversación se ve el último mensaje; si no, el correo para reconocer al usuario
+            binding.tvEmail.text = when {
+                item.lastMessage.isEmpty() -> user.email
+                item.lastFromMe -> binding.root.context.getString(R.string.users_last_from_me, item.lastMessage)
+                else -> item.lastMessage
+            }
             binding.root.setOnClickListener { onClick(user) }
 
             binding.tvBadge.text = if (item.unread > MAX_BADGE) "$MAX_BADGE+" else item.unread.toString()

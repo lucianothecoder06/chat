@@ -63,7 +63,13 @@ class UsersViewModel(
                     .map { chats ->
                         Resource.Success(
                             state.data.map { user ->
-                                UserItem(user, chats[user.uid]?.unread?.get(myUid)?.toInt() ?: 0)
+                                val chat = chats[user.uid]
+                                UserItem(
+                                    user = user,
+                                    unread = chat?.unread?.get(myUid)?.toInt() ?: 0,
+                                    lastMessage = chat?.lastMessage.orEmpty(),
+                                    lastFromMe = chat?.lastSenderId == myUid,
+                                )
                             },
                         )
                     }

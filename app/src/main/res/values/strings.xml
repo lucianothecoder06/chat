@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Chat</string>
     <string name="users_title">Chats</string>
+    <string name="users_last_from_me">Tú: %1$s</string>
     <string name="users_empty">Aún no hay otros usuarios registrados</string>
     <string name="action_logout">Cerrar sesión</string>
     <string name="action_theme">Tema</string>
