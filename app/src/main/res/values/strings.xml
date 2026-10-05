@@ -4,6 +4,7 @@
     <string name="users_empty">Aún no hay otros usuarios registrados</string>
     <string name="action_logout">Cerrar sesión</string>
     <string name="action_theme">Tema</string>
+    <string name="action_photo">Foto de perfil</string>
     <!-- Mismo orden que ThemePreference.MODES -->
     <string-array name="theme_options">
         <item>Según el sistema</item>
