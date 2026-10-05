@@ -1,6 +1,7 @@
 package com.example.chat.ui.users
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -12,7 +13,7 @@ import com.example.chat.util.ImageUtils
 /** Fila de la lista de usuarios. `onClick` se ejecuta al tocar un usuario. */
 class UsersAdapter(
     private val onClick: (User) -> Unit,
-) : ListAdapter<User, UsersAdapter.UserViewHolder>(DIFF) {
+) : ListAdapter<UserItem, UsersAdapter.UserViewHolder>(DIFF) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val binding = ItemUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -25,10 +26,14 @@ class UsersAdapter(
 
     inner class UserViewHolder(private val binding: ItemUserBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(user: User) {
+        fun bind(item: UserItem) {
+            val user = item.user
             binding.tvName.text = user.name
             binding.tvEmail.text = user.email
             binding.root.setOnClickListener { onClick(user) }
+
+            binding.tvBadge.text = if (item.unread > MAX_BADGE) "$MAX_BADGE+" else item.unread.toString()
+            binding.tvBadge.visibility = if (item.unread > 0) View.VISIBLE else View.GONE
 
             val photo = ImageUtils.decodeBase64(user.photoBase64)
             if (photo != null) {
@@ -42,9 +47,11 @@ class UsersAdapter(
     }
 
     private companion object {
-        val DIFF = object : DiffUtil.ItemCallback<User>() {
-            override fun areItemsTheSame(old: User, new: User) = old.uid == new.uid
-            override fun areContentsTheSame(old: User, new: User) = old == new
+        const val MAX_BADGE = 99
+
+        val DIFF = object : DiffUtil.ItemCallback<UserItem>() {
+            override fun areItemsTheSame(old: UserItem, new: UserItem) = old.user.uid == new.user.uid
+            override fun areContentsTheSame(old: UserItem, new: UserItem) = old == new
         }
     }
 }

@@ -4,10 +4,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chat.data.model.User
 import com.example.chat.data.repository.AuthRepository
+import com.example.chat.data.repository.ChatRepository
 import com.example.chat.data.repository.UserRepository
 import com.example.chat.util.Resource
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -17,10 +22,11 @@ import kotlinx.coroutines.launch
 class UsersViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val userRepository: UserRepository = UserRepository(),
+    private val chatRepository: ChatRepository = ChatRepository(),
 ) : ViewModel() {
 
-    private val _users = MutableLiveData<Resource<List<User>>>()
-    val users: LiveData<Resource<List<User>>> = _users
+    private val _users = MutableLiveData<Resource<List<UserItem>>>()
+    val users: LiveData<Resource<List<UserItem>>> = _users
 
     // Foto propia en Base64 (o null); se muestra en la barra superior
     private val _myPhoto = MutableLiveData<String?>()
@@ -37,13 +43,34 @@ class UsersViewModel(
         val uid = authRepository.currentUid
         if (uid != null) {
             viewModelScope.launch {
-                userRepository.observeUsers(uid).collect { _users.value = it }
+                usersWithUnread(uid).collect { _users.value = it }
             }
             viewModelScope.launch {
                 userRepository.observeUser(uid).collect { _myPhoto.value = it?.photoBase64 }
             }
         }
     }
+
+    /**
+     * Usuarios con su contador de mensajes sin leer. Cuando cambia la lista de usuarios se vuelven
+     * a escuchar los chats (flatMapLatest cancela las escuchas anteriores).
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun usersWithUnread(myUid: String): Flow<Resource<List<UserItem>>> =
+        userRepository.observeUsers(myUid).flatMapLatest { state ->
+            when (state) {
+                is Resource.Success -> chatRepository.observeChats(myUid, state.data.map { it.uid })
+                    .map { chats ->
+                        Resource.Success(
+                            state.data.map { user ->
+                                UserItem(user, chats[user.uid]?.unread?.get(myUid)?.toInt() ?: 0)
+                            },
+                        )
+                    }
+                is Resource.Loading -> flowOf(Resource.Loading)
+                is Resource.Error -> flowOf(state)
+            }
+        }
 
     /** Recibe la foto ya comprimida; al guardarse, `myPhoto` cambia solo gracias al listener. */
     fun updatePhoto(photoBase64: String) {
