@@ -13,6 +13,7 @@ data class Chat(
     val lastMessage: String = "",
     val lastSenderId: String = "",
     val lastMessageAt: Date? = null,
+    val typing: Map<String, Boolean> = emptyMap(), // uid → está escribiendo ahora
 ) {
     /** Uid del otro participante en un chat 1 a 1. */
     fun otherUserId(myUid: String): String? = participants.firstOrNull { it != myUid }

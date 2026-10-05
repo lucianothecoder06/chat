@@ -14,6 +14,7 @@
     <!-- Chat -->
     <string name="chat_you">Tú</string>
     <string name="chat_hint">Escribe un mensaje</string>
+    <string name="chat_typing">escribiendo…</string>
     <string name="chat_send">Enviar</string>
     <string name="chat_attach">Adjuntar imagen</string>
     <string name="chat_image_error">No se pudo procesar la imagen. Prueba con otra.</string>

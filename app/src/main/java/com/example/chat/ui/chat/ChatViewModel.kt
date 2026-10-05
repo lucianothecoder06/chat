@@ -11,6 +11,7 @@ import com.example.chat.data.repository.ChatRepository
 import com.example.chat.util.Resource
 import com.example.chat.util.Validators
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -39,15 +40,58 @@ class ChatViewModel @JvmOverloads constructor(
     private val _sendError = MutableLiveData<String>()
     val sendError: LiveData<String> = _sendError
 
-    // Escucha de Firestore; se guarda para cancelarla en onCleared
+    // true mientras la otra persona está escribiendo
+    private val _otherTyping = MutableLiveData(false)
+    val otherTyping: LiveData<Boolean> = _otherTyping
+
+    // Escuchas de Firestore; se guardan para cancelarlas en onCleared
     private var messagesJob: Job? = null
+    private var typingJob: Job? = null
+
+    // Estado de escritura propio: se avisa solo al cambiar, no en cada letra
+    private var iAmTyping = false
+    private var idleJob: Job? = null
 
     init {
         if (chatId != null) {
             messagesJob = viewModelScope.launch {
                 chatRepository.observeMessages(chatId).collect { _messages.value = it }
             }
+            if (otherUid != null) {
+                typingJob = viewModelScope.launch {
+                    chatRepository.observeTyping(chatId, otherUid).collect { _otherTyping.value = it }
+                }
+            }
         }
+    }
+
+    /** Se llama en cada cambio del campo de texto. Avisa "escribiendo" y lo quita tras 3 s sin teclear. */
+    fun onTextChanged(text: String) {
+        if (text.isBlank()) {
+            stopTyping()
+            return
+        }
+        setTyping(true)
+        idleJob?.cancel()
+        idleJob = viewModelScope.launch {
+            delay(TYPING_IDLE_MILLIS)
+            setTyping(false)
+        }
+    }
+
+    /** Quita el aviso (al enviar, al salir de la pantalla o al vaciar el campo). */
+    fun stopTyping() {
+        idleJob?.cancel()
+        setTyping(false)
+    }
+
+    private fun setTyping(typing: Boolean) {
+        if (iAmTyping == typing) return
+        val chat = chatId ?: return
+        val me = myUid ?: return
+        val other = otherUid ?: return
+        iAmTyping = typing
+        chatRepository.setTyping(chat, me, other, typing)
     }
 
     /** Devuelve true si el mensaje era válido y se mandó a enviar (la vista puede limpiar el campo). */
@@ -59,6 +103,8 @@ class ChatViewModel @JvmOverloads constructor(
         val chat = chatId ?: return false
         val sender = myUid ?: return false
         val receiver = otherUid ?: return false
+        idleJob?.cancel()
+        iAmTyping = false // sendMessage ya deja typing en false
         viewModelScope.launch {
             val result = chatRepository.sendMessage(chat, sender, receiver, text)
             if (result is Resource.Error) _sendError.value = result.message
@@ -80,5 +126,11 @@ class ChatViewModel @JvmOverloads constructor(
     override fun onCleared() {
         // Al cancelar el Flow, ChatRepository quita el snapshot listener (awaitClose)
         messagesJob?.cancel()
+        typingJob?.cancel()
+        stopTyping() // no es una corrutina: no se cancela con el ViewModel
+    }
+
+    private companion object {
+        const val TYPING_IDLE_MILLIS = 3000L
     }
 }
