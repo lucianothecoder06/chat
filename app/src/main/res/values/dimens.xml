@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tamaño de la foto de perfil en la barra superior (igual que el ícono sin foto) -->
+    <dimen name="toolbar_avatar_size">32dp</dimen>
+</resources>

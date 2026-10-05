@@ -3,17 +3,23 @@ package com.example.chat.ui.users
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.ThumbnailUtils
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.chat.R
 import com.example.chat.data.model.Chat
@@ -22,8 +28,12 @@ import com.example.chat.databinding.ActivityUsersBinding
 import com.example.chat.notifications.NotificationHelper
 import com.example.chat.ui.auth.LoginActivity
 import com.example.chat.ui.chat.ChatActivity
+import com.example.chat.util.ImageUtils
 import com.example.chat.util.Resource
 import com.example.chat.util.ThemePreference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Pantalla principal: lista de usuarios registrados. Tocar uno abre el chat con esa persona. */
 class UsersActivity : AppCompatActivity() {
@@ -35,6 +45,12 @@ class UsersActivity : AppCompatActivity() {
     // Si el usuario niega el permiso la app funciona igual, solo que sin notificaciones
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    // Selector del sistema, igual que en el chat: no pide permisos
+    private val pickPhoto =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) savePhoto(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,8 +68,14 @@ class UsersActivity : AppCompatActivity() {
         binding.rvUsers.adapter = adapter
 
         binding.toolbar.inflateMenu(R.menu.menu_main)
+        // La foto propia va a la izquierda de la barra; tocarla (o el menú) permite cambiarla
+        binding.toolbar.setNavigationOnClickListener { choosePhoto() }
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.action_photo -> {
+                    choosePhoto()
+                    true
+                }
                 R.id.action_theme -> {
                     showThemeDialog()
                     true
@@ -74,6 +96,11 @@ class UsersActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        viewModel.myPhoto.observe(this) { photo -> showMyPhoto(photo) }
+        viewModel.photoError.observe(this) { message ->
+            Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+        }
+
         viewModel.users.observe(this) { state ->
             binding.progress.visibility = if (state is Resource.Loading) View.VISIBLE else View.GONE
             when (state) {
@@ -89,6 +116,35 @@ class UsersActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun choosePhoto() {
+        pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
+    /** Reducir y comprimir la imagen es pesado, así que se hace en un hilo de fondo. */
+    private fun savePhoto(uri: Uri) {
+        lifecycleScope.launch {
+            val base64 = withContext(Dispatchers.IO) { ImageUtils.encodeToBase64(contentResolver, uri) }
+            if (base64 == null) {
+                Snackbar.make(binding.root, R.string.chat_image_error, Snackbar.LENGTH_LONG).show()
+            } else {
+                viewModel.updatePhoto(base64)
+            }
+        }
+    }
+
+    /** Foto propia recortada en círculo en la barra; sin foto, un ícono de persona. */
+    private fun showMyPhoto(photoBase64: String?) {
+        val photo = ImageUtils.decodeBase64(photoBase64)
+        binding.toolbar.navigationIcon = if (photo == null) {
+            ContextCompat.getDrawable(this, R.drawable.ic_account_circle)
+        } else {
+            val size = resources.getDimensionPixelSize(R.dimen.toolbar_avatar_size)
+            val square = ThumbnailUtils.extractThumbnail(photo, size, size) // recorta al centro y reduce
+            RoundedBitmapDrawableFactory.create(resources, square).apply { isCircular = true }
+        }
+        binding.toolbar.navigationContentDescription = getString(R.string.action_photo)
     }
 
     /** Intent explícito al chat con el id de la conversación y los datos de la otra persona. */

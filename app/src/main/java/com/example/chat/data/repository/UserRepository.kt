@@ -3,10 +3,12 @@ package com.example.chat.data.repository
 import com.example.chat.data.model.User
 import com.example.chat.util.Resource
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 /** Lectura de los perfiles guardados en `users/{uid}`. */
 class UserRepository(
@@ -31,5 +33,26 @@ class UserRepository(
                 trySend(Resource.Success(users))
             }
         awaitClose { registration.remove() }
+    }
+
+    /** Perfil de un usuario en tiempo real (para mostrar la foto propia en la barra). */
+    fun observeUser(uid: String): Flow<User?> = callbackFlow {
+        val registration = db.collection(AuthRepository.USERS).document(uid)
+            .addSnapshotListener { snapshot, _ -> trySend(snapshot?.toObject<User>()) }
+        awaitClose { registration.remove() }
+    }
+
+    /** Guarda la foto de perfil (ya reducida y en Base64, ver ImageUtils) en `users/{uid}.photoBase64`. */
+    suspend fun updatePhoto(uid: String, photoBase64: String): Resource<Unit> {
+        return try {
+            db.collection(AuthRepository.USERS).document(uid).update(PHOTO, photoBase64).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error("No se pudo guardar la foto. Intenta de nuevo.", e)
+        }
+    }
+
+    private companion object {
+        const val PHOTO = "photoBase64"
     }
 }
