@@ -78,8 +78,14 @@ class ChatActivity : AppCompatActivity() {
         observeViewModel()
     }
 
+    override fun onStart() {
+        super.onStart()
+        visibleChatId = viewModel.chatId
+    }
+
     override fun onStop() {
         super.onStop()
+        visibleChatId = null
         // Si el usuario sale con texto a medias, el otro no debe seguir viendo "escribiendo"
         if (::binding.isInitialized) viewModel.stopTyping()
     }
@@ -135,6 +141,11 @@ class ChatActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Chat que está en pantalla ahora mismo (null si ninguno); el servicio de push lo consulta. */
+        @Volatile
+        var visibleChatId: String? = null
+
+
         const val EXTRA_CHAT_ID = "chatId"
         const val EXTRA_OTHER_UID = "otherUid"
         const val EXTRA_OTHER_NAME = "otherName"
