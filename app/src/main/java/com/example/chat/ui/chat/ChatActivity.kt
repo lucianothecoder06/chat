@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.R
@@ -62,6 +63,7 @@ class ChatActivity : AppCompatActivity() {
         binding.rvMessages.adapter = adapter
 
         binding.btnSend.setOnClickListener { submit() }
+        binding.etMessage.doAfterTextChanged { viewModel.onTextChanged(it?.toString().orEmpty()) }
         binding.btnAttach.setOnClickListener {
             pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
@@ -71,6 +73,12 @@ class ChatActivity : AppCompatActivity() {
         }
 
         observeViewModel()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Si el usuario sale con texto a medias, el otro no debe seguir viendo "escribiendo"
+        if (::binding.isInitialized) viewModel.stopTyping()
     }
 
     private fun submit() {
@@ -111,6 +119,9 @@ class ChatActivity : AppCompatActivity() {
                     binding.tvEmpty.visibility = View.VISIBLE
                 }
             }
+        }
+        viewModel.otherTyping.observe(this) { typing ->
+            binding.toolbar.subtitle = if (typing) getString(R.string.chat_typing) else null
         }
         viewModel.messageError.observe(this) { error ->
             binding.tilMessage.error = error?.let { getString(it) }

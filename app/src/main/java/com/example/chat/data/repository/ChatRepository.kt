@@ -3,6 +3,8 @@ package com.example.chat.data.repository
 import com.example.chat.data.model.Message
 import com.example.chat.util.Resource
 import com.google.firebase.firestore.DocumentSnapshot.ServerTimestampBehavior
+import android.util.Log
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -41,10 +43,11 @@ class ChatRepository(
             val message = Message(senderId = senderId, text = text.trim(), imageBase64 = imageBase64)
 
             val summary = mapOf(
-                PARTICIPANTS to listOf(senderId, receiverId),
+                PARTICIPANTS to participantsOf(senderId, receiverId),
                 LAST_MESSAGE to previewOf(message),
                 LAST_SENDER_ID to senderId,
                 LAST_MESSAGE_AT to FieldValue.serverTimestamp(),
+                TYPING to mapOf(senderId to false), // al enviar deja de "escribir"
             )
 
             db.batch()
@@ -79,6 +82,33 @@ class ChatRepository(
         awaitClose { registration.remove() }
     }
 
+    /**
+     * Avisa en `chats/{chatId}.typing.{myUid}` si el usuario está escribiendo.
+     * No es `suspend` ni espera respuesta: es un aviso pasajero y si falla no pasa nada.
+     * Usa merge, así también funciona antes del primer mensaje (cuando el chat aún no existe).
+     */
+    fun setTyping(chatId: String, myUid: String, otherUid: String, typing: Boolean) {
+        val data = mapOf(
+            PARTICIPANTS to participantsOf(myUid, otherUid),
+            TYPING to mapOf(myUid to typing),
+        )
+        db.collection(CHATS).document(chatId).set(data, SetOptions.merge())
+            .addOnFailureListener { e -> Log.w(TAG, "No se pudo actualizar el estado de escritura", e) }
+    }
+
+    /** true mientras la otra persona está escribiendo en este chat. */
+    fun observeTyping(chatId: String, otherUid: String): Flow<Boolean> = callbackFlow {
+        val registration = db.collection(CHATS).document(chatId)
+            .addSnapshotListener { snapshot, error ->
+                // Un error aquí no debe romper el chat: simplemente no se muestra el indicador
+                trySend(error == null && snapshot?.get(FieldPath.of(TYPING, otherUid)) == true)
+            }
+        awaitClose { registration.remove() }
+    }
+
+    // Siempre en el mismo orden (como el id del chat), si no las reglas verían los participantes "cambiados"
+    private fun participantsOf(uidA: String, uidB: String): List<String> = listOf(uidA, uidB).sorted()
+
     /** Texto corto que se guarda en el chat para la lista de conversaciones. */
     private fun previewOf(message: Message): String =
         if (message.text.isNotEmpty()) message.text else "📷 Foto"
@@ -90,6 +120,8 @@ class ChatRepository(
         private const val LAST_MESSAGE = "lastMessage"
         private const val LAST_SENDER_ID = "lastSenderId"
         private const val LAST_MESSAGE_AT = "lastMessageAt"
+        private const val TYPING = "typing"
+        private const val TAG = "ChatRepository"
         private const val CREATED_AT = "createdAt"
     }
 }
