@@ -1,6 +1,7 @@
 package com.example.chat.notifications
 
 import com.example.chat.R
+import com.example.chat.ui.chat.ChatActivity
 import com.example.chat.data.repository.AuthRepository
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -22,10 +23,14 @@ class ChatMessagingService : FirebaseMessagingService() {
      * Android solo, usando el canal e ícono por defecto del manifest.
      */
     override fun onMessageReceived(message: RemoteMessage) {
+        // Si ya está viendo ese chat, el mensaje aparece en pantalla: la notificación sobra
+        val chatId = message.data["chatId"]
+        if (chatId != null && chatId == ChatActivity.visibleChatId) return
+
         val title = message.notification?.title
             ?: message.data["title"]
             ?: getString(R.string.notification_default_title)
         val body = message.notification?.body ?: message.data["body"] ?: ""
-        NotificationHelper.showMessage(this, title, body, message.data["senderId"])
+        NotificationHelper.showMessage(this, title, body, message.data["senderId"], chatId)
     }
 }

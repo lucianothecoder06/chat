@@ -44,6 +44,7 @@
         <activity
                 android:name=".ui.chat.ChatActivity"
                 android:exported="false"
+                android:parentActivityName=".ui.users.UsersActivity"
                 android:windowSoftInputMode="adjustResize"/>
 
         <service
