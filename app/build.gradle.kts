@@ -1,3 +1,4 @@
+import java.util.Base64
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -5,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.services)
 }
+
+// Llave de la cuenta de servicio con rol "Firebase Cloud Messaging API Admin" (T17).
+// No se sube a git (ver app/.gitignore). Sin el archivo la app compila y funciona, pero no envía pushes.
+val fcmKeyFile = file("fcm-service-account.json")
+val fcmKeyBase64 = if (fcmKeyFile.exists()) Base64.getEncoder().encodeToString(fcmKeyFile.readBytes()) else ""
 
 android {
     namespace = "com.example.chat"
@@ -18,6 +24,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // En Base64 para no tener que escapar las comillas y saltos de línea del JSON
+        buildConfigField("String", "FCM_SERVICE_ACCOUNT", "\"$fcmKeyBase64\"")
     }
 
     buildTypes {
@@ -30,8 +39,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    packaging {
+        // Metadatos repetidos en los jars de google-auth; no se usan en Android
+        resources.excludes += setOf("META-INF/INDEX.LIST", "META-INF/DEPENDENCIES")
+    }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -58,6 +72,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.play.services) // .await() sobre las Task de Firebase
+    implementation(libs.google.auth) // firma las llamadas a la API de FCM con la cuenta de servicio (T17)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
