@@ -63,7 +63,10 @@ class ChatActivity : AppCompatActivity() {
         binding.rvMessages.adapter = adapter
 
         binding.btnSend.setOnClickListener { submit() }
-        binding.etMessage.doAfterTextChanged { viewModel.onTextChanged(it?.toString().orEmpty()) }
+        binding.etMessage.doAfterTextChanged {
+            binding.tilMessage.error = null // al escribir se quita el aviso de "mensaje vacío"
+            viewModel.onTextChanged(it?.toString().orEmpty())
+        }
         binding.btnAttach.setOnClickListener {
             pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
